@@ -1,0 +1,40 @@
+FROM debian:buster-slim
+ARG PATH="/root/miniconda/bin:${PATH}"
+ENV PATH="/root/miniconda/bin:${PATH}"
+
+RUN apt-get update
+RUN apt-get update
+RUN apt install -y gnupg2
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32
+RUN echo "deb http://us-west-2.ec2.archive.ubuntu.com/ubuntu/ trusty multiverse\ndeb http://us-west-2.ec2.archive.ubuntu.com/ubuntu/ trusty-updates multiverse\ndeb http://us-west-2.ec2.archive.ubuntu.com/ubuntu/ trusty-backports main restricted universe multiverse" | tee /etc/apt/sources.list.d/multiverse.list
+RUN apt-get update
+RUN apt-get --reinstall install -y apt-config-auto-update
+RUN apt-get install -y fonts-liberation
+RUN apt-get install -y texlive-fonts-extra
+RUN apt-get update \
+        && apt-get install -y wget \
+        && apt-get install -y g++ \ 
+        && apt-get install -y build-essential \
+        && apt-get install -y cmake \ 
+        && apt-get install -y git \ 
+        && apt-get install -y libcurl4-gnutls-dev libxml2-dev libssl-dev \
+        && apt-get install -y libboost-all-dev \ 
+        && apt-get install -y wkhtmltopdf 
+
+RUN wget -O /tmp/miniconda.sh \
+    https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+    && mkdir /root/.conda \
+    && bash /tmp/miniconda.sh -b -p /root/miniconda \
+    && rm -f /tmp/miniconda.sh \
+    && conda update -n base -c defaults conda \ 
+    && conda install pip
+
+RUN conda install -c conda-forge r-essentials r-base=4.0.3 \ 
+    && conda install -c conda-forge r-seurat \ 
+    && conda install -c conda-forge r-dplyr r-devtools r-networkd3 r-d3r r-webshot \ 
+    && conda clean -afy
+
+RUN export TAR="/bin/tar" && Rscript -e "devtools::install_github('atarashansky/sankeyD3',dependencies=FALSE)"
+RUN /root/miniconda/bin/pip install hnswlib==0.4.0 bbknn scanorama rpy2
+COPY fonts/* /usr/share/fonts/

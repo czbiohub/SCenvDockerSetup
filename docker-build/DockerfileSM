@@ -1,0 +1,36 @@
+FROM scrna:analysis.base.SM
+RUN chmod ugo+rwx /root
+ARG PATH="/root/miniconda/bin:${PATH}"
+ENV PATH="/root/miniconda/bin:${PATH}"
+# copying over your git folders and installing them.
+RUN pip install holoviews && rm -rf ~/.cache
+
+COPY git_repos/self-assembling-manifold /tmp/self-assembling-manifold
+RUN pip install /tmp/self-assembling-manifold/. --no-dependencies && rm -rf /tmp/ && rm -rf ~/.cache
+COPY git_repos/SAMap /tmp/SAMap
+RUN pip install /tmp/SAMap/. --no-dependencies && rm -rf /tmp/ && rm -rf ~/.cache
+COPY git_repos/cellD /tmp/cellD
+RUN pip install /tmp/cellD/. --no-dependencies && rm -rf /tmp/ && rm -rf ~/.cache
+COPY git_repos/SCTransformPy /tmp/sctpy
+RUN pip install /tmp/sctpy/. && rm -rf /tmp/ && rm -rf ~/.cache
+RUN pip install git+https://github.com/eggnogdb/eggnog-mapper.git
+
+
+RUN mkdir /tmp && chmod ugo+rwx /tmp
+RUN mkdir /jupyter
+RUN mkdir /jupyter/notebooks
+WORKDIR /jupyter/
+
+ARG USER_ID
+ARG GROUP_ID
+RUN addgroup --gid $GROUP_ID user
+RUN adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID user
+USER user
+
+COPY git_repos/sSAM /tmp/sSAM
+RUN pip install /tmp/sSAM/. --no-dependencies
+#COPY git_repos/umap /tmp/umap
+#RUN pip install /tmp/umap/. --no-dependencies
+COPY git_repos/SAMap2 /tmp/SAMap2
+RUN pip install /tmp/SAMap2/. --no-dependencies
+CMD jupyter notebook --port=$PORT --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.password="" --NotebookApp.token=""

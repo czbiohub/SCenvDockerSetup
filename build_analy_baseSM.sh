@@ -1,0 +1,1 @@
+docker build docker-build -t scrna:analysis.base.SM -f docker-build/Dockerfile.analy.base.SM
